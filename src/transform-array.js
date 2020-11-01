@@ -1,48 +1,46 @@
 const CustomError = require("../extensions/custom-error");
 
 module.exports = function transform(arr) {
-  if(!Array.isArray(arr)) new Error();
-  let arr_mod = arr;
-
-  return loop(arr_mod);
+    if (!Array.isArray(arr)) new Error();
+    return loop(arr);
 };
 
 let loop = (arr) => {
+    const rules = ['--discard-prev', '--discard-next', '--double-prev', '--double-next', 'undefined'];
+    let arr_mod = [...arr];
 
-  let arr_mod = arr;
-  for (let i = 0; i < arr.length; i++) {
-    
-    if(arr[i] == '--discard-next'){
-      if(i === (arr.length-1)) {
-        arr_mod.pop();
-      } else {
-        arr_mod.splice(i,2);
-      }
-      arr_mod.splice(i,2);
-    } else if(arr[i] == '--discard-prev') {
-        if(i === 0) {
-          arr_mod.shift();
-        } else {
-          arr_mod.splice(i-1,2);
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] === '--discard-next') {
+            k = arr_mod.findIndex(elm => elm === '--discard-next');
+            arr_mod[k] = 'undefined';
+            if (k !== (arr_mod.length - 1)) {
+                next = arr_mod[k + 1];
+                if (!rules.includes(next)) arr_mod.splice(k + 1, 1);
+            }
+        } else if (arr[i] === '--discard-prev') {
+            k = arr_mod.findIndex(elm => elm === '--discard-prev');
+            arr_mod[k] = 'undefined';
+            if (k !== 0) {
+                prev = arr_mod[k - 1];
+                if (!rules.includes(prev)) arr_mod.splice(k - 1, 2);
+            }
+        } else if (arr[i] === '--double-next') {
+            k = arr_mod.findIndex(elm => elm === '--double-next');
+            arr_mod[k] = 'undefined';
+            if (k !== arr_mod.length - 1) {
+                next = arr_mod[k + 1];
+                if (!rules.includes(next)) arr_mod.splice(k + 1, 0, next);
+            }
+        } else if (arr[i] === '--double-prev') {
+            k = arr_mod.findIndex(elm => elm === '--double-prev');
+            arr_mod[k] = 'undefined';
+            if (k !== 0) {
+                prev = arr_mod[k - 1];
+                if (!rules.includes(prev)) arr_mod.splice(k - 1, 0, prev);
+            }
         }
-    } else if(arr[i] == '--double-next') {
-      isLastElm = (i === arr.length-1) ? true : false;
-      if(isLastElm){
-        arr_mod.splice(i,1);
-      } else {
-        let next_val = arr[i+1];
-        arr_mod.fill(i,1,next_val);
-      }
-    } else if(arr[i] == '--double-prev') {
-      isFirstElm = (i === 0) ? true : false;
-      if(isFirstElm){
-        arr_mod.splice(i,1);
-      } else {
-        let prev_val = arr[i-1];
-        arr_mod.fill(i,1,prev_val);
-      }
     }
-  }
-  return arr_mod;
-}
 
+    arr_mod = arr_mod.filter(elm => !rules.includes(elm)).map(elm => elm);
+    return arr_mod;
+}
